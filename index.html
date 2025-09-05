@@ -157,12 +157,13 @@ function nextStep() {
     return;
   }
 
-  let symbol = tape[headPos];
+  let symbol = tape[headPos].trim();
   let table = document.getElementById('rules');
-  let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText === symbol);
-  let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText === state);
+  let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText.trim() === symbol);
+  let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText.trim() === state.trim());
   if (rowIdx === -1 || colIdx === -1) {
-    alert('Немає правила для цього стану!'); return;
+    alert('Немає правила для цього стану!');
+    return;
   }
   let cell = table.rows[rowIdx].cells[colIdx];
   let cmd = cell.innerText.trim();
@@ -171,13 +172,13 @@ function nextStep() {
   table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
   cell.classList.add('current');
 
-  let parts = cmd.split(/\s+/);
+  let parts = cmd.split(/\s+/).filter(Boolean);
   if (parts.length !== 3) {
     alert('Команда повинна складатися з трьох частин: символ, напрямок (> < .), новий стан');
     return;
   }
 
-  let [newSymbol, direction, newState] = parts;
+  let [newSymbol, direction, newState] = parts.map(x => x.trim());
 
   // завжди замінюємо символ
   tape[headPos] = newSymbol;
@@ -253,4 +254,3 @@ renderTape();
 
 </body>
 </html>
-
