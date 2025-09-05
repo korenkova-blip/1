@@ -106,10 +106,9 @@
 3. Клацніть по клітинці стрічки, щоб обрати початкову позицію головки.
 4. В полі "Алфавіт" задайте допустимі символи, пробіл — це "_".
 5. В таблиці задавайте правила у форматі: [новий_символ] [напрямок: > < .] [новий_стан].
-6. Якщо символ команди — "." і стан — "0", машина зупиниться.
-7. Якщо символ команди — "." і стан — Q1, машина нічого не змінює і лише оглядає поточну клітинку.
-8. "Наступний крок" виконує дію згідно з поточним символом та станом.
-9. "Скинути" — очищає стрічку та повертає стан у Q1.
+6. Якщо напрямок — "." і стан — "0", машина зупиниться.
+7. "Наступний крок" виконує дію згідно з поточним символом та станом.
+8. "Скинути" — очищає стрічку та повертає стан у Q1.
 </textarea>
 
 <div class="controls">
@@ -153,15 +152,24 @@ function startMachine() {
 function nextStep() {
   let symbol = tape[headPos];
   let table = document.getElementById('rules');
+
+  // шукаємо рядок і колонку
   let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText === symbol);
   let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText === state);
+
   if (rowIdx === -1 || colIdx === -1) {
-    alert('Немає правила для цього стану!'); return;
+    alert('Немає правила для цього стану!');
+    return;
   }
+
   let cell = table.rows[rowIdx].cells[colIdx];
   let cmd = cell.innerText.trim();
-  if (!cmd) { alert('Немає правила для цього стану!'); return; }
+  if (!cmd) { 
+    alert('Немає правила для цього стану!'); 
+    return; 
+  }
 
+  // підсвічування
   table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
   cell.classList.add('current');
 
@@ -173,19 +181,25 @@ function nextStep() {
 
   let [newSymbol, direction, newState] = parts;
 
-  if (direction === '.' && newState === '0') {
-  alert('Машина зупинилась.');
-  return;
-}
+  // завжди замінюємо символ
+  tape[headPos] = newSymbol;
 
-  if (newSymbol !== '.') tape[headPos] = newSymbol;
+  // перевірка зупинки
+  if (direction === '.' && newState === '0') {
+    alert('Машина зупинилась. Команда зупинки активована.');
+    renderTape();
+    return;
+  }
+
+  // рух головки
   if (direction === '>' || direction === 'вправо') headPos++;
   else if (direction === '<' || direction === 'вліво') headPos--;
-  else if (direction !== '.' && newSymbol !== '.') {
+  else if (direction !== '.') {
     alert('Невірний напрямок. Використовуйте >, < або .');
     return;
   }
 
+  // оновлення стану
   state = newState;
   renderTape();
 }
@@ -238,6 +252,4 @@ renderTape();
 </script>
 
 </body>
-
 </html>
-
