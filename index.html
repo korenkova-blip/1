@@ -77,14 +77,13 @@
 <h3>Умова задачі:</h3>
 <textarea id="task"></textarea>
 
-<!-- 🔀 Переніс алфавіт вище за "Вхідне слово" -->
-<h3>Алфавіт:</h3>
-<input type="text" id="alphabet" value="0 1 _" oninput="updateAlphabet()">
-
 <h3>Вхідне слово:</h3>
 <input type="text" id="inputWord" placeholder="Наприклад: 101" oninput="updateTapeFromInput()">
 
 <div id="tape"></div>
+
+<h3>Алфавіт:</h3>
+<input type="text" id="alphabet" value="0 1 _" oninput="updateAlphabet()">
 
 <h3>Таблиця переходів:</h3>
 <table id="rules">
@@ -103,9 +102,9 @@
 <textarea id="comment">
 Інструкція користування:
 1. Уведіть умову задачі у верхньому полі.
-2. Спочатку задайте алфавіт — допустимі символи (пробіл — це "_").
-3. Введіть вхідне слово — воно зʼявиться на стрічці.
-4. Клацніть по клітинці стрічки, щоб обрати початкову позицію головки.
+2. Введіть вхідне слово — воно зʼявиться на стрічці.
+3. Клацніть по клітинці стрічки, щоб обрати початкову позицію головки.
+4. В полі "Алфавіт" задайте допустимі символи, пробіл — це "_".
 5. В таблиці задавайте правила у форматі: [новий_символ] [напрямок: > < .] [новий_стан].
 6. Якщо напрямок — "." і стан — "0", машина зупиниться (але символ буде замінений).
 7. "Наступний крок" виконує дію згідно з поточним символом та станом.
@@ -140,4 +139,134 @@ function setHead(pos) {
   renderTape();
 }
 
-function updateTapeFromIn
+function updateTapeFromInput() {
+  let input = document.getElementById('inputWord').value.trim();
+  initialWord = input; // зберігаємо початкове слово
+  tape = Array(21).fill('_');
+  for (let i = 0; i < input.length && (10 + i) < tape.length; i++) {
+    tape[10 + i] = input[i];
+  }
+  renderTape();
+}
+
+function restoreInputWord() {
+  tape = Array(21).fill('_');
+  for (let i = 0; i < initialWord.length && (10 + i) < tape.length; i++) {
+    tape[10 + i] = initialWord[i];
+  }
+  headPos = 10;
+  state = 'Q1';
+  halted = false;
+  renderTape();
+}
+
+function startMachine() {
+  state = 'Q1';
+  halted = false;
+  renderTape();
+}
+
+function nextStep() {
+  if (halted) {
+    alert("Машина вже зупинена. Натисніть 'Скинути' або 'Повернутись до вхідного слова'.");
+    return;
+  }
+
+  let symbol = tape[headPos].trim();
+  let table = document.getElementById('rules');
+  let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText.trim() === symbol);
+  let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText.trim() === state.trim());
+  if (rowIdx === -1 || colIdx === -1) {
+    alert('Немає правила для цього стану!');
+    return;
+  }
+  let cell = table.rows[rowIdx].cells[colIdx];
+  let cmd = cell.innerText.trim();
+  if (!cmd) { alert('Немає правила для цього стану!'); return; }
+
+  table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
+  cell.classList.add('current');
+
+  let parts = cmd.split(/\s+/).filter(Boolean);
+  if (parts.length !== 3) {
+    alert('Команда повинна складатися з трьох частин: символ, напрямок (> < .), новий стан');
+    return;
+  }
+
+  let [newSymbol, direction, newState] = parts.map(x => x.trim());
+
+  // завжди замінюємо символ
+  tape[headPos] = newSymbol;
+
+  // зупинка
+  if (direction === '.' && newState === '0') {
+    alert('Машина зупинилась. Команда зупинки активована.');
+    renderTape();
+    halted = true;
+    return;
+  }
+
+  // рух головки
+  if (direction === '>' || direction === 'вправо') headPos++;
+  else if (direction === '<' || direction === 'вліво') headPos--;
+  else if (direction !== '.') {
+    alert('Невірний напрямок. Використовуйте >, < або .');
+    return;
+  }
+
+  // оновлення стану
+  state = newState;
+  renderTape();
+}
+
+function resetMachine() {
+  tape = Array(21).fill('_');
+  headPos = 10;
+  state = 'Q1';
+  halted = false;
+  document.getElementById('inputWord').value = '';
+  initialWord = '';
+  renderTape();
+}
+
+function updateAlphabet() {
+  let alphabet = document.getElementById('alphabet').value.trim().split(' ');
+  if (!alphabet.includes('_')) alphabet.push('_');
+  let tbody = document.getElementById('rulesBody');
+  tbody.innerHTML = '';
+  alphabet.forEach(sym => {
+    let row = document.createElement('tr');
+    let tdSymbol = document.createElement('td');
+    tdSymbol.textContent = sym;
+    row.appendChild(tdSymbol);
+    let states = document.querySelectorAll('#rules thead th');
+    for (let i = 1; i < states.length; i++) {
+      let td = document.createElement('td');
+      td.contentEditable = true;
+      td.innerHTML = '';
+      row.appendChild(td);
+    }
+    tbody.appendChild(row);
+  });
+}
+
+function addStateColumn() {
+  let table = document.getElementById('rules');
+  let th = document.createElement('th');
+  let newState = 'Q' + (table.rows[0].cells.length);
+  th.innerText = newState;
+  table.rows[0].appendChild(th);
+  for (let i = 1; i < table.rows.length; i++) {
+    let td = document.createElement('td');
+    td.contentEditable = true;
+    td.innerHTML = '';
+    table.rows[i].appendChild(td);
+  }
+}
+
+updateAlphabet();
+renderTape();
+</script>
+
+</body>
+</html>
