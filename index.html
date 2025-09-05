@@ -109,12 +109,14 @@
 6. Якщо напрямок — "." і стан — "0", машина зупиниться (але символ буде замінений).
 7. "Наступний крок" виконує дію згідно з поточним символом та станом.
 8. "Скинути" — очищає стрічку та повертає стан у Q1.
+9. "Повернутись до вхідного слова" — відновлює стрічку такою, як була при запуску.
 </textarea>
 
 <div class="controls">
   <button onclick="startMachine()">Старт</button>
   <button onclick="nextStep()">Наступний крок</button>
   <button onclick="resetMachine()">Скинути</button>
+  <button onclick="restoreInputWord()">Повернутись до вхідного слова</button>
 </div>
 
 <script>
@@ -122,6 +124,7 @@ let tape = Array(21).fill('_');
 let headPos = 10;
 let state = 'Q1';
 let halted = false;
+let initialWord = ''; // початкове слово
 
 function renderTape() {
   let html = '';
@@ -138,10 +141,22 @@ function setHead(pos) {
 
 function updateTapeFromInput() {
   let input = document.getElementById('inputWord').value.trim();
+  initialWord = input; // зберігаємо початкове слово
   tape = Array(21).fill('_');
   for (let i = 0; i < input.length && (10 + i) < tape.length; i++) {
     tape[10 + i] = input[i];
   }
+  renderTape();
+}
+
+function restoreInputWord() {
+  tape = Array(21).fill('_');
+  for (let i = 0; i < initialWord.length && (10 + i) < tape.length; i++) {
+    tape[10 + i] = initialWord[i];
+  }
+  headPos = 10;
+  state = 'Q1';
+  halted = false;
   renderTape();
 }
 
@@ -153,7 +168,7 @@ function startMachine() {
 
 function nextStep() {
   if (halted) {
-    alert("Машина вже зупинена. Натисніть 'Скинути' для нового запуску.");
+    alert("Машина вже зупинена. Натисніть 'Скинути' або 'Повернутись до вхідного слова'.");
     return;
   }
 
@@ -210,6 +225,7 @@ function resetMachine() {
   state = 'Q1';
   halted = false;
   document.getElementById('inputWord').value = '';
+  initialWord = '';
   renderTape();
 }
 
