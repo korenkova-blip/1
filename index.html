@@ -18,14 +18,7 @@
   <label>Початковий стан: <input id="state" value="1"></label>
   <br><br>
 
-  <!-- ✅ Спочатку алфавіт -->
-  <label>Алфавіт: <input id="alphabet" value="0,1,_"></label>
-  <br><br>
-
-  <!-- ✅ Потім слово -->
-  <label>Вхідне слово: <input id="tapeInput" value="1011"></label>
-  <br><br>
-
+  <label>Стрічка: <input id="tapeInput" value="1011"></label>
   <button onclick="init()">Ініціалізувати</button>
   <button onclick="nextStep()">Крок</button>
 
@@ -59,19 +52,11 @@
     let tape = [];
     let headPos = 0;
     let state = "1";
-    let alphabet = [];
 
     function init() {
-      // читаємо алфавіт
-      alphabet = document.getElementById('alphabet').value.split(',');
-      alphabet = alphabet.map(s => s.trim());
-
-      // читаємо слово
       let input = document.getElementById('tapeInput').value;
       tape = input.split('');
-
-      // додаємо пустий символ
-      tape.push('_');
+      tape.push('_'); // запасна клітинка
       headPos = 0;
       state = document.getElementById('state').value;
       renderTape();
@@ -93,6 +78,7 @@
       let symbol = tape[headPos];
       let table = document.getElementById('rules');
 
+      // шукаємо рядок і колонку
       let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText === symbol);
       let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText === state);
 
@@ -108,9 +94,11 @@
         return; 
       }
 
+      // підсвічування
       table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
       cell.classList.add('current');
 
+      // ✅ розбір команди
       let parts = cmd.split(/\s+/);
       if (parts.length !== 3) {
         alert('Команда повинна складатися з трьох частин: символ, напрямок (> < .), новий стан');
@@ -119,20 +107,17 @@
 
       let [newSymbol, direction, newState] = parts;
 
-      // ✅ перевірка на алфавіт
-      if (!alphabet.includes(newSymbol)) {
-        alert(`Символ "${newSymbol}" не входить у вказаний алфавіт!`);
-        return;
-      }
-
+      // ✅ завжди замінюємо поточний символ
       tape[headPos] = newSymbol;
 
+      // ✅ перевірка зупинки
       if (direction === '.' && newState === '0') {
         alert('Машина зупинилась. Команда зупинки активована.');
         renderTape();
         return;
       }
 
+      // ✅ рух головки
       if (direction === '>' || direction === 'вправо') headPos++;
       else if (direction === '<' || direction === 'вліво') headPos--;
       else if (direction !== '.') {
@@ -140,10 +125,10 @@
         return;
       }
 
+      // ✅ оновлення стану
       state = newState;
       renderTape();
     }
   </script>
 </body>
 </html>
-
