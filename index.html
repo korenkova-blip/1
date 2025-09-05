@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>Машина Тюринга</title>
+  <title>Машина Тюрінга</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .tape { display: flex; justify-content: center; margin: 20px 0; }
@@ -13,12 +13,19 @@
   </style>
 </head>
 <body>
-  <h1>Машина Тюринга</h1>
+  <h1>Машина Тюрінга</h1>
 
   <label>Початковий стан: <input id="state" value="1"></label>
   <br><br>
 
-  <label>Стрічка: <input id="tapeInput" value="1011"></label>
+  <!-- ✅ Спочатку алфавіт -->
+  <label>Алфавіт: <input id="alphabet" value="0,1,_"></label>
+  <br><br>
+
+  <!-- ✅ Потім слово -->
+  <label>Вхідне слово: <input id="tapeInput" value="1011"></label>
+  <br><br>
+
   <button onclick="init()">Ініціалізувати</button>
   <button onclick="nextStep()">Крок</button>
 
@@ -52,11 +59,19 @@
     let tape = [];
     let headPos = 0;
     let state = "1";
+    let alphabet = [];
 
     function init() {
+      // читаємо алфавіт
+      alphabet = document.getElementById('alphabet').value.split(',');
+      alphabet = alphabet.map(s => s.trim());
+
+      // читаємо слово
       let input = document.getElementById('tapeInput').value;
       tape = input.split('');
-      tape.push('_'); // запасна клітинка
+
+      // додаємо пустий символ
+      tape.push('_');
       headPos = 0;
       state = document.getElementById('state').value;
       renderTape();
@@ -78,7 +93,6 @@
       let symbol = tape[headPos];
       let table = document.getElementById('rules');
 
-      // шукаємо рядок і колонку
       let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText === symbol);
       let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText === state);
 
@@ -94,11 +108,9 @@
         return; 
       }
 
-      // підсвічування
       table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
       cell.classList.add('current');
 
-      // ✅ розбір команди
       let parts = cmd.split(/\s+/);
       if (parts.length !== 3) {
         alert('Команда повинна складатися з трьох частин: символ, напрямок (> < .), новий стан');
@@ -107,17 +119,20 @@
 
       let [newSymbol, direction, newState] = parts;
 
-      // ✅ завжди замінюємо поточний символ
+      // ✅ перевірка на алфавіт
+      if (!alphabet.includes(newSymbol)) {
+        alert(`Символ "${newSymbol}" не входить у вказаний алфавіт!`);
+        return;
+      }
+
       tape[headPos] = newSymbol;
 
-      // ✅ перевірка зупинки
       if (direction === '.' && newState === '0') {
         alert('Машина зупинилась. Команда зупинки активована.');
         renderTape();
         return;
       }
 
-      // ✅ рух головки
       if (direction === '>' || direction === 'вправо') headPos++;
       else if (direction === '<' || direction === 'вліво') headPos--;
       else if (direction !== '.') {
@@ -125,10 +140,10 @@
         return;
       }
 
-      // ✅ оновлення стану
       state = newState;
       renderTape();
     }
   </script>
 </body>
 </html>
+
