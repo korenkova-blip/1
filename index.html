@@ -2,254 +2,133 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>Симулятор машини Тюринга</title>
+  <title>Машина Тюринга</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 20px;
-      text-align: center;
-      background: #f0f4ff;
-      color: #222;
-    }
-    textarea, input[type="text"] {
-      width: 80%;
-      margin-bottom: 10px;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #888;
-      background: #fff;
-    }
-    #tape span {
-      display: inline-block;
-      padding: 8px;
-      border: 2px solid #555;
-      width: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      background-color: #e0eaff;
-      margin: 1px;
-      transition: all 0.2s ease;
-    }
-    .head {
-      background-color: #ffeb3b;
-      border-color: #f57f17;
-      box-shadow: 0 0 8px 4px #fbc02d;
-      transform: scale(1.2);
-      z-index: 1;
-    }
-    table {
-      border-collapse: collapse;
-      margin: 10px auto;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    th, td {
-      border: 1px solid #999;
-      padding: 6px;
-      width: 80px;
-      text-align: center;
-    }
-    .controls {
-      margin-top: 10px;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 20px;
-      background: #1976d2;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1565c0;
-    }
-    .current {
-      background-color: #c8e6c9 !important;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .tape { display: flex; justify-content: center; margin: 20px 0; }
+    .cell { border: 1px solid black; padding: 10px; width: 30px; text-align: center; }
+    .head { background: yellow; }
+    table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; text-align: center; }
+    .current { background: lightgreen; }
   </style>
 </head>
 <body>
+  <h1>Машина Тюринга</h1>
 
-<h1>🌐 Симулятор машини Тюринга</h1>
+  <label>Початковий стан: <input id="state" value="1"></label>
+  <br><br>
 
-<h3>Умова задачі:</h3>
-<textarea id="task"></textarea>
+  <label>Стрічка: <input id="tapeInput" value="1011"></label>
+  <button onclick="init()">Ініціалізувати</button>
+  <button onclick="nextStep()">Крок</button>
 
-<h3>Вхідне слово:</h3>
-<input type="text" id="inputWord" placeholder="Наприклад: 101" oninput="updateTapeFromInput()">
+  <div class="tape" id="tape"></div>
 
-<div id="tape"></div>
-
-<h3>Алфавіт:</h3>
-<input type="text" id="alphabet" value="0 1 _" oninput="updateAlphabet()">
-
-<h3>Таблиця переходів:</h3>
-<table id="rules">
-  <thead>
+  <h2>Правила</h2>
+  <table id="rules">
     <tr>
-      <th></th>
-      <th>Q1</th>
-      <th>Q2</th>
+      <th>Символ\Стан</th>
+      <th>1</th>
+      <th>2</th>
     </tr>
-  </thead>
-  <tbody id="rulesBody"></tbody>
-</table>
-<button onclick="addStateColumn()">Додати стан</button>
+    <tr>
+      <td>0</td>
+      <td>1 > 1</td>
+      <td>0 < 1</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>0 > 2</td>
+      <td>1 . 0</td>
+    </tr>
+    <tr>
+      <td>_</td>
+      <td>_ < 1</td>
+      <td>_ . 0</td>
+    </tr>
+  </table>
 
-<h3>Коментар:</h3>
-<textarea id="comment">
-Інструкція користування:
-1. Уведіть умову задачі у верхньому полі.
-2. Введіть вхідне слово — воно зʼявиться на стрічці.
-3. Клацніть по клітинці стрічки, щоб обрати початкову позицію головки.
-4. В полі "Алфавіт" задайте допустимі символи, пробіл — це "_".
-5. В таблиці задавайте правила у форматі: [новий_символ] [напрямок: > < .] [новий_стан].
-6. Якщо напрямок — "." і стан — "0", машина зупиниться.
-7. "Наступний крок" виконує дію згідно з поточним символом та станом.
-8. "Скинути" — очищає стрічку та повертає стан у Q1.
-</textarea>
+  <script>
+    let tape = [];
+    let headPos = 0;
+    let state = "1";
 
-<div class="controls">
-  <button onclick="startMachine()">Старт</button>
-  <button onclick="nextStep()">Наступний крок</button>
-  <button onclick="resetMachine()">Скинути</button>
-</div>
-
-<script>
-let tape = Array(21).fill('_');
-let headPos = 10;
-let state = 'Q1';
-
-function renderTape() {
-  let html = '';
-  for (let i = 0; i < tape.length; i++) {
-    html += `<span onclick="setHead(${i})" class="${i === headPos ? 'head' : ''}">${tape[i]}</span>`;
-  }
-  document.getElementById('tape').innerHTML = html;
-}
-
-function setHead(pos) {
-  headPos = pos;
-  renderTape();
-}
-
-function updateTapeFromInput() {
-  let input = document.getElementById('inputWord').value.trim();
-  tape = Array(21).fill('_');
-  for (let i = 0; i < input.length && (10 + i) < tape.length; i++) {
-    tape[10 + i] = input[i];
-  }
-  renderTape();
-}
-
-function startMachine() {
-  state = 'Q1';
-  renderTape();
-}
-
-function nextStep() {
-  let symbol = tape[headPos];
-  let table = document.getElementById('rules');
-
-  // шукаємо рядок і колонку
-  let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText === symbol);
-  let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText === state);
-
-  if (rowIdx === -1 || colIdx === -1) {
-    alert('Немає правила для цього стану!');
-    return;
-  }
-
-  let cell = table.rows[rowIdx].cells[colIdx];
-  let cmd = cell.innerText.trim();
-  if (!cmd) { 
-    alert('Немає правила для цього стану!'); 
-    return; 
-  }
-
-  // підсвічування
-  table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
-  cell.classList.add('current');
-
-  let parts = cmd.split(/\s+/);
-  if (parts.length !== 3) {
-    alert('Команда повинна складатися з трьох частин: символ, напрямок (> < .), новий стан');
-    return;
-  }
-
-  let [newSymbol, direction, newState] = parts;
-
-  // завжди замінюємо символ
-  tape[headPos] = newSymbol;
-
-  // перевірка зупинки
-  if (direction === '.' && newState === '0') {
-    alert('Машина зупинилась. Команда зупинки активована.');
-    renderTape();
-    return;
-  }
-
-  // рух головки
-  if (direction === '>' || direction === 'вправо') headPos++;
-  else if (direction === '<' || direction === 'вліво') headPos--;
-  else if (direction !== '.') {
-    alert('Невірний напрямок. Використовуйте >, < або .');
-    return;
-  }
-
-  // оновлення стану
-  state = newState;
-  renderTape();
-}
-
-function resetMachine() {
-  tape = Array(21).fill('_');
-  headPos = 10;
-  state = 'Q1';
-  document.getElementById('inputWord').value = '';
-  renderTape();
-}
-
-function updateAlphabet() {
-  let alphabet = document.getElementById('alphabet').value.trim().split(' ');
-  if (!alphabet.includes('_')) alphabet.push('_');
-  let tbody = document.getElementById('rulesBody');
-  tbody.innerHTML = '';
-  alphabet.forEach(sym => {
-    let row = document.createElement('tr');
-    let tdSymbol = document.createElement('td');
-    tdSymbol.textContent = sym;
-    row.appendChild(tdSymbol);
-    let states = document.querySelectorAll('#rules thead th');
-    for (let i = 1; i < states.length; i++) {
-      let td = document.createElement('td');
-      td.contentEditable = true;
-      td.innerHTML = '';
-      row.appendChild(td);
+    function init() {
+      let input = document.getElementById('tapeInput').value;
+      tape = input.split('');
+      tape.push('_'); // запасна клітинка
+      headPos = 0;
+      state = document.getElementById('state').value;
+      renderTape();
     }
-    tbody.appendChild(row);
-  });
-}
 
-function addStateColumn() {
-  let table = document.getElementById('rules');
-  let th = document.createElement('th');
-  let newState = 'Q' + (table.rows[0].cells.length);
-  th.innerText = newState;
-  table.rows[0].appendChild(th);
-  for (let i = 1; i < table.rows.length; i++) {
-    let td = document.createElement('td');
-    td.contentEditable = true;
-    td.innerHTML = '';
-    table.rows[i].appendChild(td);
-  }
-}
+    function renderTape() {
+      let tapeDiv = document.getElementById('tape');
+      tapeDiv.innerHTML = '';
+      for (let i = 0; i < tape.length; i++) {
+        let cell = document.createElement('div');
+        cell.className = 'cell';
+        if (i === headPos) cell.classList.add('head');
+        cell.innerText = tape[i];
+        tapeDiv.appendChild(cell);
+      }
+    }
 
-updateAlphabet();
-renderTape();
-</script>
+    function nextStep() {
+      let symbol = tape[headPos];
+      let table = document.getElementById('rules');
 
+      // шукаємо рядок і колонку
+      let rowIdx = Array.from(table.rows).findIndex(r => r.cells[0]?.innerText === symbol);
+      let colIdx = Array.from(table.rows[0].cells).findIndex(c => c.innerText === state);
+
+      if (rowIdx === -1 || colIdx === -1) {
+        alert('Немає правила для цього стану!');
+        return;
+      }
+
+      let cell = table.rows[rowIdx].cells[colIdx];
+      let cmd = cell.innerText.trim();
+      if (!cmd) { 
+        alert('Немає правила для цього стану!'); 
+        return; 
+      }
+
+      // підсвічування
+      table.querySelectorAll('td').forEach(td => td.classList.remove('current'));
+      cell.classList.add('current');
+
+      // ✅ розбір команди
+      let parts = cmd.split(/\s+/);
+      if (parts.length !== 3) {
+        alert('Команда повинна складатися з трьох частин: символ, напрямок (> < .), новий стан');
+        return;
+      }
+
+      let [newSymbol, direction, newState] = parts;
+
+      // ✅ завжди замінюємо поточний символ
+      tape[headPos] = newSymbol;
+
+      // ✅ перевірка зупинки
+      if (direction === '.' && newState === '0') {
+        alert('Машина зупинилась. Команда зупинки активована.');
+        renderTape();
+        return;
+      }
+
+      // ✅ рух головки
+      if (direction === '>' || direction === 'вправо') headPos++;
+      else if (direction === '<' || direction === 'вліво') headPos--;
+      else if (direction !== '.') {
+        alert('Невірний напрямок. Використовуйте >, < або .');
+        return;
+      }
+
+      // ✅ оновлення стану
+      state = newState;
+      renderTape();
+    }
+  </script>
 </body>
 </html>
