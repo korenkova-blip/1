@@ -173,10 +173,10 @@ function nextStep() {
 
   let [newSymbol, direction, newState] = parts;
 
-  if (newSymbol === '.' && newState === '0') {
-    alert('Машина зупинилась. Команда . 0 активована.');
-    return;
-  }
+  if (direction === '.' && newState === '0') {
+  alert('Машина зупинилась.');
+  return;
+}
 
   if (newSymbol !== '.') tape[headPos] = newSymbol;
   if (direction === '>' || direction === 'вправо') headPos++;
@@ -240,3 +240,4 @@ renderTape();
 </body>
 
 </html>
+
